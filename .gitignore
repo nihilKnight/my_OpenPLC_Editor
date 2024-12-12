@@ -1,0 +1,10 @@
+matiec/
+mingw/
+pgit/
+python/
+
+.vscode/
+.venv/
+
+*.exe
+*.bat
