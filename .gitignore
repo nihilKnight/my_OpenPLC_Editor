@@ -3,10 +3,11 @@ mingw/
 pgit/
 python/
 
-.vscode/
-.venv/
+**/.vscode/
+**/.venv/
+**/__pycache__/
 
-*.exe
-*.bat
+**/*.exe
+**/*.bat
 
 test_files/
