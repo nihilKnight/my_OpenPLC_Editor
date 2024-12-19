@@ -1,5 +1,5 @@
 //Program MD5
-#define PROGRAM_MD5 "b72935f83b8d9042d24515bdb04639ac"
+#define PROGRAM_MD5 "c7a28d5b4b64500645d73d375bbf5382"
 //Comms configurations
 #define MBSERIAL_IFACE Serial
 #define MBSERIAL_BAUD 115200

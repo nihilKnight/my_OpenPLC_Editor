@@ -8,3 +8,5 @@ python/
 
 *.exe
 *.bat
+
+test_files/
