@@ -10,5 +10,6 @@ python/
 
 **/*.exe
 **/*.bat
+**/*.st
 
 test_files/
