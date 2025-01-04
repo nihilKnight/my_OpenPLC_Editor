@@ -38,6 +38,7 @@ import shutil
 import re
 import tempfile
 import hashlib
+import socket
 import codecs
 from datetime import datetime
 from weakref import WeakKeyDictionary
@@ -2167,24 +2168,63 @@ class ProjectController(ConfigTreeNode, PLCControler):
         dialog.Destroy()
         if answer == wx.ID_YES:
             self._connector.RepairPLC()
-    
-    def _generateOpenPLC(self):
+
+    # def _generateOpenPLC(self):
+    #     self._Clean()
+    #     if (self._Build() is True):
+    #         f = open(self._getIECgeneratedcodepath(), "r")
+    #         program = f.read()
+    #         f.close()
+    #         dlg = wx.FileDialog(self.AppFrame, "Save to file:", "", "", "OpenPLC Program(*.st)|*.st", wx.SAVE|wx.OVERWRITE_PROMPT)
+    #         if dlg.ShowModal() == wx.ID_OK:
+    #             try:
+    #                 f = open(dlg.GetPath(), "w")
+    #                 f.write(program)
+    #                 f.close()
+    #                 #wx.MessageBox('OpenPLC program generated successfully', 'Info', wx.OK | wx.ICON_INFORMATION)
+    #                 self.logger.write("OpenPLC program generated successfully\n")
+    #             except:
+    #                 self.logger.write_error('It was not possible to save the generated program\n')
+
+    def _generateOpenPLC(self): 
         self._Clean()
-        if (self._Build() is True):
-            f = open(self._getIECgeneratedcodepath(), "r")
-            program = f.read()
-            f.close()
-            dlg = wx.FileDialog(self.AppFrame, "Save to file:", "", "", "OpenPLC Program(*.st)|*.st", wx.SAVE|wx.OVERWRITE_PROMPT)
+        if self._Build() is True:
+            # 读取生成的PLC程序内容
+            with open(self._getIECgeneratedcodepath(), "r") as f:
+                program = f.read()
+
+            # 弹出对话框让用户输入目标IP和端口号
+            dlg = wx.TextEntryDialog(self.AppFrame, "Please type in the target IP:", "Target IP", "")
             if dlg.ShowModal() == wx.ID_OK:
-                try:
-                    f = open(dlg.GetPath(), "w")
-                    f.write(program)
-                    f.close()
-                    #wx.MessageBox('OpenPLC program generated successfully', 'Info', wx.OK | wx.ICON_INFORMATION)
-                    self.logger.write("OpenPLC program generated successfully\n")
-                except:
-                    self.logger.write_error('It was not possible to save the generated program\n')
-    
+                target_ip = dlg.GetValue()
+                dlg.Destroy()
+
+                dlg = wx.TextEntryDialog(self.AppFrame, "Please type in the target port:", "target port", "5000")  # 默认端口5000
+                if dlg.ShowModal() == wx.ID_OK:
+                    target_port = int(dlg.GetValue())  # 将端口号转换为整数
+                    dlg.Destroy()
+
+                    # 发送程序内容到指定的IP和端口
+                    try:
+                        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        try:
+                            s.connect((target_ip, target_port))
+                        except Exception as e:
+                            self.logger.write_error('Connection failed: {}\n'.format(str(e)))
+                            s.close()
+                            raise  # Re-raise the exception to be caught later
+                        try:
+                            s.sendall(program.encode('utf-8'))  # 发送内容，确保是字节编码
+                            wx.MessageBox('OpenPLC program sent successfully to {}:{}'.format(target_ip, target_port), 'Info', wx.OK | wx.ICON_INFORMATION)
+                            self.logger.write('OpenPLC program sent successfully to {}:{}\n'.format(target_ip, target_port))
+                        except Exception as e:
+                            wx.MessageBox('Failed to send data: {}'.format(str(e)), 'Error', wx.OK | wx.ICON_ERROR)
+                            self.logger.write_error('Failed to send data: {}\n'.format(str(e)))
+                            s.close()
+                            raise  # Re-raise the exception to be caught later
+                    finally:
+                        s.close()  # Ensure the socket is closed in case of an error outside of the try-except block
+
     def _generateArduino(self):
         self._Clean()
         if (self._Build() is True):
