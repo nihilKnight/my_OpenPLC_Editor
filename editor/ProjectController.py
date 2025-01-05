@@ -39,6 +39,7 @@ import re
 import tempfile
 import hashlib
 import socket
+import struct
 import codecs
 from datetime import datetime
 from weakref import WeakKeyDictionary
@@ -2214,7 +2215,9 @@ class ProjectController(ConfigTreeNode, PLCControler):
                             s.close()
                             raise  # Re-raise the exception to be caught later
                         try:
-                            s.sendall(program.encode('utf-8'))  # 发送内容，确保是字节编码
+                            size = len(program.encode('utf-8'))
+                            s.send(struct.pack('Q', size))  # 将数据长度存储为 unsigned long long 予以发送。
+                            s.sendall(program.encode('utf-8'))
                             wx.MessageBox('OpenPLC program sent successfully to {}:{}'.format(target_ip, target_port), 'Info', wx.OK | wx.ICON_INFORMATION)
                             self.logger.write('OpenPLC program sent successfully to {}:{}\n'.format(target_ip, target_port))
                         except Exception as e:
